@@ -10,4 +10,5 @@ public:
 	WindowClass(HINSTANCE hInstance_, WNDPROC winProc_);
 	void CreateWinEx();
 	void ShowWin();
+	HWND GetHWND();
 };

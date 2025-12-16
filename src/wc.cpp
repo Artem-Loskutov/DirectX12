@@ -27,3 +27,7 @@ void WindowClass::CreateWinEx() {
 void WindowClass::ShowWin() {
 	ShowWindow(hWnd, SW_SHOW);
 };
+
+HWND WindowClass::GetHWND() {
+	return hWnd;
+};

@@ -16,7 +16,7 @@ void WindowClass::CreateWinEx() {
 		L"MyWindowClass",
 		L"MyWindowName",
 		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 400, 400,
+		CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
 		nullptr,
 		nullptr,
 		hInstance,

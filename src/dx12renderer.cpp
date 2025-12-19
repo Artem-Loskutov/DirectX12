@@ -58,19 +58,16 @@ bool DX12Renderer::Initialize(HWND hwnd, int width, int height)
 
 void DX12Renderer::Update()
 {
-    // Простая анимация: вращение куба вокруг Y
     static float angle = 0.0f;
     angle += 0.01f;
     mWorld = XMMatrixRotationY(angle);
 
-    // Обновляем Object CB
     ObjectConstants obj;
     obj.world = XMMatrixTranspose(mWorld);
     obj.view = XMMatrixTranspose(mView);
     obj.projection = XMMatrixTranspose(mProjection);
     *mObjectCBMapped = obj;
 
-    // Можно обновить свет, если есть динамика
     LightConstants light;
     light.lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f);
     light.ambientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -197,14 +194,12 @@ void DX12Renderer::CreateDepthStencil()
     clear.DepthStencil.Depth = 1.0f;
 
 
-    //HERE
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
     heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
     heapProps.CreationNodeMask = 1;
     heapProps.VisibleNodeMask = 1;
-    //HERE
 
 
     mDevice->CreateCommittedResource(
@@ -242,7 +237,7 @@ void DX12Renderer::Render()
 
     auto dsv = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-    FLOAT clearColor[] = { 0.1f, 0.1f, 0.3f, 1.0f };
+    FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     mCommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     mCommandList->ClearDepthStencilView(
         dsv,
@@ -257,21 +252,18 @@ void DX12Renderer::Render()
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 
-    // Обновляем Object CB
     ObjectConstants obj;
     obj.world = XMMatrixTranspose(mWorld);
     obj.view = XMMatrixTranspose(mView);
     obj.projection = XMMatrixTranspose(mProjection);
     *mObjectCBMapped = obj;
 
-    // Обновляем Light CB
     LightConstants light;
     light.lightDir = XMFLOAT3(0.5f, -1.0f, 0.5f);
     light.ambientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
     light.diffuseColor = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
     *mLightCBMapped = light;
 
-    // Bind CBV к root signature
     mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->GetGPUVirtualAddress());
     mCommandList->SetGraphicsRootConstantBufferView(1, mLightCB->GetGPUVirtualAddress());
 
@@ -386,8 +378,6 @@ void DX12Renderer::BuildShadersAndPSO()
     pso.SampleMask = UINT_MAX;
 
 
-
-    //HERE
     D3D12_RASTERIZER_DESC rasterizer = {};
     rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizer.CullMode = D3D12_CULL_MODE_BACK;
@@ -413,7 +403,6 @@ void DX12Renderer::BuildShadersAndPSO()
     pso.RasterizerState = rasterizer;
     pso.BlendState = blend;
     pso.DepthStencilState = depth;
-    //HERE
 
     pso.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
@@ -423,108 +412,35 @@ void DX12Renderer::BuildShadersAndPSO()
     );
 }
 
-/*void DX12Renderer::BuildCubeGeometry()
-{
-    Vertex vertices[] =
-    {
-        {{-1,-1,-1},{1,0,0,1},{0,0,-1}},
-        {{-1, 1,-1},{0,1,0,1},{0,0,-1}},
-        {{ 1, 1,-1},{0,0,1,1},{0,0,-1}},
-        {{ 1,-1,-1},{1,1,0,1},{0,0,-1}},
-    };
-
-    uint16_t indices[] = { 0,1,2, 0,2,3 };
-    mIndexCount = 6;
-
-    UINT vbSize = sizeof(vertices);
-    UINT ibSize = sizeof(indices);
-
-    // Вершины — upload heap
-    D3D12_HEAP_PROPERTIES heap = {};
-    heap.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-    D3D12_RESOURCE_DESC buf = {};
-    buf.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    buf.Width = vbSize;
-    buf.Height = 1;
-    buf.DepthOrArraySize = 1;
-    buf.MipLevels = 1;
-    buf.SampleDesc.Count = 1;
-    buf.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-    mDevice->CreateCommittedResource(
-        &heap, D3D12_HEAP_FLAG_NONE,
-        &buf, D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr, IID_PPV_ARGS(&mVertexBuffer)
-    );
-
-    void* data;
-    mVertexBuffer->Map(0, nullptr, &data);
-    memcpy(data, vertices, vbSize);
-    mVertexBuffer->Unmap(0, nullptr);
-
-    mVertexBufferView =
-    {
-        mVertexBuffer->GetGPUVirtualAddress(),
-        vbSize,
-        sizeof(Vertex)
-    };
-
-    buf.Width = ibSize;
-
-    mDevice->CreateCommittedResource(
-        &heap, D3D12_HEAP_FLAG_NONE,
-        &buf, D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr, IID_PPV_ARGS(&mIndexBuffer)
-    );
-
-    mIndexBuffer->Map(0, nullptr, &data);
-    memcpy(data, indices, ibSize);
-    mIndexBuffer->Unmap(0, nullptr);
-
-    mIndexBufferView =
-    {
-        mIndexBuffer->GetGPUVirtualAddress(),
-        ibSize,
-        DXGI_FORMAT_R16_UINT
-    };
-}*/
-
 void DX12Renderer::BuildCubeGeometry()
 {
     Vertex vertices[] =
     {
-        // Front
         {{-1,-1,-1},{1,0,0,1},{0,0,-1}},
         {{-1, 1,-1},{0,1,0,1},{0,0,-1}},
         {{ 1, 1,-1},{0,0,1,1},{0,0,-1}},
         {{ 1,-1,-1},{1,1,0,1},{0,0,-1}},
 
-        // Back
         {{-1,-1,1},{1,0,1,1},{0,0,1}},
         {{ 1,-1,1},{0,1,1,1},{0,0,1}},
         {{ 1, 1,1},{1,1,1,1},{0,0,1}},
         {{-1, 1,1},{1,0,1,1},{0,0,1}},
 
-        // Left
         {{-1,-1,1},{1,0,0,1},{-1,0,0}},
         {{-1, 1,1},{0,1,0,1},{-1,0,0}},
         {{-1, 1,-1},{0,0,1,1},{-1,0,0}},
         {{-1,-1,-1},{1,1,0,1},{-1,0,0}},
 
-        // Right
         {{ 1,-1,-1},{1,0,0,1},{1,0,0}},
         {{ 1, 1,-1},{0,1,0,1},{1,0,0}},
         {{ 1, 1,1},{0,0,1,1},{1,0,0}},
         {{ 1,-1,1},{1,1,0,1},{1,0,0}},
 
-        // Top
         {{-1,1,-1},{1,0,0,1},{0,1,0}},
         {{-1,1,1},{0,1,0,1},{0,1,0}},
         {{ 1,1,1},{0,0,1,1},{0,1,0}},
         {{ 1,1,-1},{1,1,0,1},{0,1,0}},
 
-        // Bottom
         {{-1,-1,1},{1,0,0,1},{0,-1,0}},
         {{-1,-1,-1},{0,1,0,1},{0,-1,0}},
         {{ 1,-1,-1},{0,0,1,1},{0,-1,0}},
@@ -533,12 +449,12 @@ void DX12Renderer::BuildCubeGeometry()
 
     uint16_t indices[] =
     {
-        0,1,2, 0,2,3,       // Front
-        4,5,6, 4,6,7,       // Back
-        8,9,10, 8,10,11,    // Left
-        12,13,14, 12,14,15, // Right
-        16,17,18, 16,18,19, // Top
-        20,21,22, 20,22,23  // Bottom
+        0,1,2, 0,2,3,
+        4,5,6, 4,6,7,
+        8,9,10, 8,10,11,
+        12,13,14, 12,14,15,
+        16,17,18, 16,18,19,
+        20,21,22, 20,22,23
     };
 
     mIndexCount = _countof(indices);
@@ -546,7 +462,6 @@ void DX12Renderer::BuildCubeGeometry()
     UINT vbSize = sizeof(vertices);
     UINT ibSize = sizeof(indices);
 
-    // Upload heap
     D3D12_HEAP_PROPERTIES heap = {};
     heap.Type = D3D12_HEAP_TYPE_UPLOAD;
 

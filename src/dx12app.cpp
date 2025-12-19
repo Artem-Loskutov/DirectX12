@@ -16,9 +16,6 @@ DX12App::~DX12App()
 
 bool DX12App::InitWindow(int width, int height)
 {
-    mWidth = width;
-    mHeight = height;
-
     WindowClass win(mHInstance, WindowProc);
     win.CreateWinEx();
     win.ShowWin();

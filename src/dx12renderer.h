@@ -39,7 +39,6 @@ public:
     bool Initialize(HWND hwnd, int width, int height);
     void Render();
     void Update();
-    void Resize(int width, int height);
 private:
     // ===== DX12 core =====
     ComPtr<ID3D12Device> mDevice;

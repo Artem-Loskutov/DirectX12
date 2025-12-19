@@ -3,7 +3,6 @@
 
 namespace Shaders
 {
-    // Простейший Vertex Shader
     inline std::string VertexShader = R"(
     cbuffer ObjectCB : register(b0)
     {
@@ -38,7 +37,6 @@ namespace Shaders
     }
     )";
 
-    // Простейший Pixel Shader
     inline std::string PixelShader = R"(
     cbuffer LightCB : register(b1)
     {
@@ -59,7 +57,10 @@ namespace Shaders
     {
         float3 n = normalize(input.normal);
         float NdotL = max(dot(n, -lightDir), 0.0);
-        float4 finalColor = input.color * (ambientColor + diffuseColor * NdotL);
+
+        float4 baseColor = float4(0.8, 0.3, 0.3, 1.0);
+
+        float4 finalColor = baseColor * (ambientColor + diffuseColor * NdotL);
         return finalColor;
     }
     )";

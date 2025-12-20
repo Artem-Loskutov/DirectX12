@@ -4,6 +4,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
+#include <string>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -99,6 +100,7 @@ private:
     void BuildRootSignature();
     void BuildShadersAndPSO();
     void BuildCubeGeometry();
+    void BuildObj(const std::string& path);
     void BuildConstantBuffers();
 
     void WaitForGPU();

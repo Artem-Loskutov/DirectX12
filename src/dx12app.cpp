@@ -30,6 +30,7 @@ bool DX12App::Initialize(int width, int height)
         return false;
 
     mRenderer = std::make_unique<DX12Renderer>();
+
     return mRenderer->Initialize(mHwnd, width, height);
 }
 

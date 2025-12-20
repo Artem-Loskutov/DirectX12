@@ -3,6 +3,7 @@
 
 #include <d3dcompiler.h>
 #include <stdexcept>
+#include <vector>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -34,7 +35,8 @@ bool DX12Renderer::Initialize(HWND hwnd, int width, int height)
 
     BuildRootSignature();
     BuildShadersAndPSO();
-    BuildCubeGeometry();
+    //BuildCubeGeometry();
+    BuildObj("sponza.obj");
     BuildConstantBuffers();
 
     mViewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
@@ -500,6 +502,76 @@ void DX12Renderer::BuildCubeGeometry()
     mIndexBuffer->Unmap(0, nullptr);
 
     mIndexBufferView = { mIndexBuffer->GetGPUVirtualAddress(), ibSize, DXGI_FORMAT_R16_UINT };
+
+}
+
+#include "parcer.h"
+
+void DX12Renderer::BuildObj(const std::string& path)
+{
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    if (!LoadOBJ(path, vertices, indices))
+        throw std::runtime_error("Failed to load OBJ");
+
+    mIndexCount = (UINT)indices.size();
+
+    UINT vbSize = sizeof(Vertex) * (UINT)vertices.size();
+    UINT ibSize = sizeof(uint32_t) * (UINT)indices.size();
+
+    // === HEAP ===
+    D3D12_HEAP_PROPERTIES heap = {};
+    heap.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+    // === VERTEX BUFFER ===
+    D3D12_RESOURCE_DESC vbDesc = {};
+    vbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    vbDesc.Width = vbSize;
+    vbDesc.Height = 1;
+    vbDesc.DepthOrArraySize = 1;
+    vbDesc.MipLevels = 1;
+    vbDesc.SampleDesc.Count = 1;
+    vbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+    mDevice->CreateCommittedResource(
+        &heap,
+        D3D12_HEAP_FLAG_NONE,
+        &vbDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&mVertexBuffer)
+    );
+
+    void* data = nullptr;
+    mVertexBuffer->Map(0, nullptr, &data);
+    memcpy(data, vertices.data(), vbSize);
+    mVertexBuffer->Unmap(0, nullptr);
+
+    mVertexBufferView.BufferLocation = mVertexBuffer->GetGPUVirtualAddress();
+    mVertexBufferView.SizeInBytes = vbSize;
+    mVertexBufferView.StrideInBytes = sizeof(Vertex);
+
+    // === INDEX BUFFER ===
+    D3D12_RESOURCE_DESC ibDesc = vbDesc;
+    ibDesc.Width = ibSize;
+
+    mDevice->CreateCommittedResource(
+        &heap,
+        D3D12_HEAP_FLAG_NONE,
+        &ibDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&mIndexBuffer)
+    );
+
+    mIndexBuffer->Map(0, nullptr, &data);
+    memcpy(data, indices.data(), ibSize);
+    mIndexBuffer->Unmap(0, nullptr);
+
+    mIndexBufferView.BufferLocation = mIndexBuffer->GetGPUVirtualAddress();
+    mIndexBufferView.SizeInBytes = ibSize;
+    mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 }
 
 
